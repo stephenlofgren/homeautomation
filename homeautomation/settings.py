@@ -123,7 +123,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(
-        BASE_DIR, "lib/python3.5/site-packages/rest_framework/static"),
+        BASE_DIR, "venv/lib/python3.5/site-packages/rest_framework/static"),
     os.path.join(
         BASE_DIR, "Manage/static"),
 )
