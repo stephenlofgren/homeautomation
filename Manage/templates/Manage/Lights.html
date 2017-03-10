@@ -56,10 +56,10 @@ function updateLevels(element){
         var devs = haDevices.split(",")
         devs.forEach(function(devId) {
             if(element.checked){
-                turnOnDevice(devId, haOnLevel);
+                turnOnDevice(element, devId, haOnLevel);
             }
             else{
-                turnOffDevice(devId, haOnLevel);
+                turnOffDevice(element, devId, haOnLevel);
             }
         });
     }
@@ -69,23 +69,36 @@ function updateLevels(element){
     }
 }
 
-function turnOnDevice(devId, onLevel){
+function buttonPressed(element){
+    haDevices = element.getAttribute("haDevices");
+    haOnLevel = element.getAttribute("haOnLevel");
+    try {
+        var devs = haDevices.split(",")
+        devs.forEach(function(devId) {
+            turnOnDevice(element, devId, haOnLevel);
+        });
+    }
+    catch(err) {
+        //if there is an error
+        updateError(element, err);
+    }
+}
+
+function turnOnDevice(element, devId, onLevel){
         if(devId.startsWith("light") || devId.startsWith("switch")){
             turnOn(devId, onLevel)
         }
         else if(devId.startsWith("binary_sensor")){
-            //probably need to refactor so we can just do this one switch
-            setCheckboxValue(element, devId);
+            setTimeout(setCheckboxValue.bind(null, element, devId), 15000);
         }
 }
 
-function turnOffDevice(devId){
+function turnOffDevice(element, devId){
         if(devId.startsWith("light") || devId.startsWith("switch")){
             turnOff(devId)
         }
         else if(devId.startsWith("binary_sensor")){
-            //probably need to refactor so we can just do this one switch
-            setCheckboxValue(element, devId);
+            setTimeout(setCheckboxValue.bind(null, element, devId), 15000);
         }
 }
 
@@ -223,7 +236,7 @@ function updateError(checkbox, err){
         <tr>
             <td>
                 <label style="float: left" class="switch">
-                    <input type="checkbox" haDevices="switch.garage,binary_sensor.__sensor_10_0" haOnLevel="255" onclick="updateLevels(this)" cycleTime="30" />
+                    <input type="checkbox" haDevices="switch.garage,binary_sensor.__sensor_10_0" onclick="buttonPressed(this)" cycleTime="30" />
                     <div class="slider round"></div>
                 </label>
             </td>

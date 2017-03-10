@@ -68,8 +68,6 @@ class HomeAssistantView(APIView):
             url = "http://192.168.2.17:8123/api/services/switch/turn_on"
             payload = {"entity_id": device_code}
 
-
-        url = "http://192.168.2.17:8123/api/services/light/turn_on"
         headers = {
             'accept': "application/json",
             'content-type': "text/json",
