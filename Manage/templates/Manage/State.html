@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    setTimeout(startRefresh(), 5000);
+});
+
+function startRefresh(){
+        $('.valueLabel').each(function () {
+        devices = this.getAttribute("haDevices");
+        setLabelValue(this, devices);
+    });
+
+}
+
+function setLabelValue(element, devices){
+    var csrftoken = getCookie('csrftoken');
+    if(devices != null){
+        var devs = devices.split(",");
+        devs.forEach(function(devId) { 
+            serviceUrl = "/HA/status/" + devId
+            $.ajax({
+                url: serviceUrl,
+                headers: {"X-CSRFToken": csrftoken},
+                type: 'GET',
+                success: function(result) {
+                    element.innerHTML = result.state + " F";
+                },
+                error: function(result) {
+                    console.log('error');
+                    console.log(result);
+                }
+            });
+        });
+    }
+}
+
+function getRequest(serviceUrl, callback = null){
+    $.ajax({
+        url: serviceUrl,
+        headers: {"X-CSRFToken": csrftoken},
+        type: 'GET',
+        success: function(result) {
+            if(callback != null){
+                callback(result);
+            }
+        },
+        error: function(result) {
+            console.log('error');
+            console.log(result);
+        }
+    });
+}
+
+// using jQuery
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateError(checkbox, err){
+    console.info(error);
+}
+
+</script>
+<link rel="stylesheet" type="text/css" href="/static/Manage/css/manage.main.css">
+<style>
+    .error{
+        color: red;
+    }
+</style>
+
+</head>
+<body>
+    <table>
+        <tr>
+            <td>
+                <label class="valueLabel" haDevices="sensor.aeotec_zw100_multisensor_6_temperature_22_1" id="roofTempValue">0F</label>
+            </td>
+            <td>
+                <label style="float: left">Roof Temp</label>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

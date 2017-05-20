@@ -1,4 +1,4 @@
-#!/home/stephen/git/homeautomation/bin/python3
+#!/home/stephen/git/homeautomation/bin/python2
 from django.core import management
 
 if __name__ == "__main__":

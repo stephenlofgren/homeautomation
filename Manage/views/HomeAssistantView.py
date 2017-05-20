@@ -18,6 +18,7 @@ class HomeAssistantView(APIView):
      
     endpoint = "https://www.lofgrenguenther.com:8123"
 
+    @staticmethod
     @api_view(['GET'])
     @renderer_classes((JSONRenderer,))
     @permission_classes((permissions.AllowAny,))
@@ -37,6 +38,7 @@ class HomeAssistantView(APIView):
         message = json.loads(response.text)
         return Response(message)
 
+    @staticmethod
     @api_view(['PUT'])
     @renderer_classes((JSONRenderer,))
     @permission_classes((permissions.AllowAny,))
@@ -62,6 +64,7 @@ class HomeAssistantView(APIView):
         message = json.loads(response.text)
         return Response(message)
 
+    @staticmethod
     @api_view(['PUT'])
     @renderer_classes((JSONRenderer,))
     @permission_classes((permissions.AllowAny,))

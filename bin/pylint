@@ -1,4 +1,4 @@
-#!/home/stephen/git/homeautomation/bin/python3
+#!/home/stephen/git/homeautomation/bin/python2
 
 # -*- coding: utf-8 -*-
 import re

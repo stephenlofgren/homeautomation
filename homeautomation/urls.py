@@ -15,14 +15,16 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from Manage.views.LightsView import manage_lights
+from Manage.views.TemplateViews import manage_lights, manage_state
 from Manage.views.HomeAssistantView import HomeAssistantView
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'Manage/lights', manage_lights),
+    url(r'Manage/state', manage_state),
     url(r'HA/status/([a-z,A-Z,0-9,\.,_]*)$', HomeAssistantView.status),
     url(r'HA/turn_on/([a-z,A-Z,0-9,\.,_]*)$', HomeAssistantView.turn_on),
     url(r'HA/turn_off/([a-z,A-Z,0-9,\.,_]*)$', HomeAssistantView.turn_off),
-    url(r'HA/turn_on/([a-z,A-Z,0-9,\.,_]*)/([0-9]{1,3})$', HomeAssistantView.turn_on),
+    url(r'HA/turn_on/([a-z,A-Z,0-9,\.,_]*)/([0-9]{1,3})$',
+        HomeAssistantView.turn_on),
 ]
