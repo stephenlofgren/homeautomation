@@ -5,9 +5,13 @@
 <meta name="viewport" content="width=device-width">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
+
 $(document).ready(function(){
-    setTimeout(startRefresh(), 5000);
-});
+}); 
+
+function intervalRefresh(){
+    setInterval(startRefresh, 5000);
+}
 
 function startRefresh(){
         $('.valueLabel').each(function () {
@@ -86,7 +90,7 @@ function updateError(checkbox, err){
 </style>
 
 </head>
-<body>
+<body onload="intervalRefresh()">
     <table>
         <tr>
             <td>
