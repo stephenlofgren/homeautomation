@@ -11,11 +11,12 @@ from rest_framework.decorators import renderer_classes, permission_classes
 from rest_framework import permissions
 from requests.auth import HTTPBasicAuth
 from django.conf import settings
+from django.http import HttpResponse
 
 
 class HomeAssistantView(APIView):
     """defines views for each of the http verbs"""
-     
+
     endpoint = "https://www.lofgrenguenther.com:8123"
 
     @staticmethod
@@ -25,10 +26,18 @@ class HomeAssistantView(APIView):
     def status(self, pk=None):
 
         url = HomeAssistantView.endpoint + "/api/states/%s" % pk
+
+        ha_password = os.environ.get("HOMEASSISTANT_PASSWORD", '')
+
+        if ha_password == '':
+            return HttpResponse(
+                'Unauthorized - HOMEASSISTANT_PASSWORD var not set',
+                status=401)
+
         headers = {
             'accept': "application/json",
             'content-type': "text/json",
-            'x-ha-access': "esp8266Fun",
+            'x-ha-access': ha_password,
             'Accept': "application/json"
         }
         static = "static/www.lofgrenguenther.com.pem"
@@ -50,10 +59,17 @@ class HomeAssistantView(APIView):
         else:
             url = HomeAssistantView.endpoint + "/api/services/switch/turn_off"
 
+        ha_password = os.environ.get("HOMEASSISTANT_PASSWORD", '')
+
+        if ha_password == '':
+            return HttpResponse(
+                'Unauthorized - HOMEASSISTANT_PASSWORD var not set',
+                status=401)
+
         headers = {
             'accept': "application/json",
             'content-type': "text/json",
-            'x-ha-access': "esp8266Fun",
+            'x-ha-access': ha_password,
             'Accept': "application/json"
         }
 
@@ -78,10 +94,17 @@ class HomeAssistantView(APIView):
             url += "/api/services/switch/turn_on"
             payload = {"entity_id": device_code}
 
+        ha_password = os.environ.get("HOMEASSISTANT_PASSWORD", '')
+
+        if ha_password == '':
+            return HttpResponse(
+                'Unauthorized - HOMEASSISTANT_PASSWORD var not set',
+                status=401)
+
         headers = {
             'accept': "application/json",
             'content-type': "text/json",
-            'x-ha-access': "esp8266Fun",
+            'x-ha-access': ha_password,
             'Accept': "application/json"
         }
 

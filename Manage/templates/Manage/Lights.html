@@ -1,43 +1,145 @@
-
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta name="viewport" content="width=device-width">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-<script>
-$(document).ready(function(){
-    startRefresh();
-    //$("input").click(function(){
-    //    var label = $(this).parent();
-    //    $(this).prop('checked', false);
-    //});
-});
+    <meta name="viewport" content="width=device-width">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            startRefresh();
+            //$("input").click(function(){
+            //    var label = $(this).parent();
+            //    $(this).prop('checked', false);
+            //});
+        });
 
-function startRefresh(){
-    $('input[type=checkbox]').each(function () {
-        devices = this.getAttribute("haDevices");
-        setCheckboxValue(this, devices);
-    });
-}
+        function startRefresh() {
+            $('input[type=checkbox]').each(function() {
+                devices = this.getAttribute("haDevices");
+                setCheckboxValue(this, devices);
+            });
+        }
 
-function setCheckboxValue(element, devices){
-  element.checked = true;
-    var csrftoken = getCookie('csrftoken');
-    if(devices != null){
-        var devs = devices.split(",");
-        devs.forEach(function(devId) { 
-            serviceUrl = "/HA/status/" + devId
+        function setCheckboxValue(element, devices) {
+            element.checked = true;
+            var csrftoken = getCookie('csrftoken');
+            if (devices != null) {
+                var devs = devices.split(",");
+                devs.forEach(function(devId) {
+                    serviceUrl = "/HA/status/" + devId
+                    $.ajax({
+                        url: serviceUrl,
+                        headers: {
+                            "X-CSRFToken": csrftoken
+                        },
+                        type: 'GET',
+                        success: function(result) {
+                            if (result.state != "on") {
+                                element.checked = false;
+                            }
+                            //sensors over switches
+                            if (devId.startsWith("binary_sensor") && result.state == "on") {
+                                element.checked = true;
+                            }
+                        },
+                        error: function(result) {
+                            console.log('error');
+                            console.log(result);
+                        }
+                    });
+                });
+            }
+        }
+
+        function updateLevels(element) {
+            haDevices = element.getAttribute("haDevices");
+            haOnLevel = element.getAttribute("haOnLevel");
+            try {
+                var devs = haDevices.split(",")
+                devs.forEach(function(devId) {
+                    if (element.checked) {
+                        turnOnDevice(element, devId, haOnLevel);
+                    } else {
+                        turnOffDevice(element, devId, haOnLevel);
+                    }
+                });
+            } catch (err) {
+                //if there is an error
+                updateError(element, err);
+            }
+        }
+
+        function buttonPressed(element) {
+            haDevices = element.getAttribute("haDevices");
+            haOnLevel = element.getAttribute("haOnLevel");
+            try {
+                var devs = haDevices.split(",")
+                devs.forEach(function(devId) {
+                    turnOnDevice(element, devId, haOnLevel);
+                });
+            } catch (err) {
+                //if there is an error
+                updateError(element, err);
+            }
+        }
+
+        function turnOnDevice(element, devId, onLevel) {
+            if (devId.startsWith("light") || devId.startsWith("switch")) {
+                turnOn(devId, onLevel)
+            } else if (devId.startsWith("binary_sensor")) {
+                setTimeout(setCheckboxValue.bind(null, element, devId), 15000);
+            }
+        }
+
+        function turnOffDevice(element, devId) {
+            if (devId.startsWith("light") || devId.startsWith("switch")) {
+                turnOff(devId)
+            } else if (devId.startsWith("binary_sensor")) {
+                setTimeout(setCheckboxValue.bind(null, element, devId), 15000);
+            }
+        }
+
+        function turnOn(devId, onLevel) {
+            var serviceUrl = "/HA/turn_on/" + devId;
+            if (onLevel != null) {
+                serviceUrl += "/" + onLevel
+            }
+            putRequest(serviceUrl, null);
+        }
+
+        function turnOff(devId) {
+            putRequest("/HA/turn_off/" + devId);
+        }
+
+        function putRequest(serviceUrl, callback = null) {
+            var csrftoken = getCookie('csrftoken');
             $.ajax({
                 url: serviceUrl,
-                headers: {"X-CSRFToken": csrftoken},
+                type: 'PUT',
+                headers: {
+                    "X-CSRFToken": csrftoken
+                },
+                success: function(result) {
+                    if (callback != null) {
+                        callback();
+                    }
+                },
+                error: function(result) {
+                    console.log('error');
+                }
+            });
+        }
+
+        function getRequest(serviceUrl, callback = null) {
+            $.ajax({
+                url: serviceUrl,
+                headers: {
+                    "X-CSRFToken": csrftoken
+                },
                 type: 'GET',
                 success: function(result) {
-                    if(result.state != "on"){
-                        element.checked = false;
-                    }
-                    //sensors over switches
-                    if(devId.startsWith("binary_sensor") && result.state == "on"){
-                        element.checked = true;
+                    if (callback != null) {
+                        callback(result);
                     }
                 },
                 error: function(result) {
@@ -45,150 +147,49 @@ function setCheckboxValue(element, devices){
                     console.log(result);
                 }
             });
-        });
-    }
-}
+        }
 
-function updateLevels(element){
-    haDevices = element.getAttribute("haDevices");
-    haOnLevel = element.getAttribute("haOnLevel");
-    try {
-        var devs = haDevices.split(",")
-        devs.forEach(function(devId) {
-            if(element.checked){
-                turnOnDevice(element, devId, haOnLevel);
+        // using jQuery
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
             }
-            else{
-                turnOffDevice(element, devId, haOnLevel);
-            }
-        });
-    }
-    catch(err) {
-        //if there is an error
-        updateError(element, err);
-    }
-}
-
-function buttonPressed(element){
-    haDevices = element.getAttribute("haDevices");
-    haOnLevel = element.getAttribute("haOnLevel");
-    try {
-        var devs = haDevices.split(",")
-        devs.forEach(function(devId) {
-            turnOnDevice(element, devId, haOnLevel);
-        });
-    }
-    catch(err) {
-        //if there is an error
-        updateError(element, err);
-    }
-}
-
-function turnOnDevice(element, devId, onLevel){
-        if(devId.startsWith("light") || devId.startsWith("switch")){
-            turnOn(devId, onLevel)
+            return cookieValue;
         }
-        else if(devId.startsWith("binary_sensor")){
-            setTimeout(setCheckboxValue.bind(null, element, devId), 15000);
+
+        function updateError(checkbox, err) {
+            var checkBox = $("input:checkbox[value=" + checkbox.value + "]")
+            checkBox.prop("checked", !checkbox.checked);
+            var error = checkBox.closest('tr').find(".error");
+            error.text(err + ", try again.");
+            console.info(error);
+            //console.info($(this).element.closest('tr').find('.error'));
         }
-}
-
-function turnOffDevice(element, devId){
-        if(devId.startsWith("light") || devId.startsWith("switch")){
-            turnOff(devId)
+    </script>
+    <link rel="stylesheet" type="text/css" href="/static/Manage/css/manage.main.css">
+    <style>
+        .error {
+            color: red;
         }
-        else if(devId.startsWith("binary_sensor")){
-            setTimeout(setCheckboxValue.bind(null, element, devId), 15000);
-        }
-}
-
-function turnOn(devId, onLevel){
-    var serviceUrl = "/HA/turn_on/" + devId;
-    if(onLevel != null){
-        serviceUrl += "/" + onLevel
-    }
-    putRequest(serviceUrl, null);
-}
-
-function turnOff(devId){
-    putRequest("/HA/turn_off/" + devId);
-}
-
-function putRequest(serviceUrl, callback = null){
-    var csrftoken = getCookie('csrftoken');
-    $.ajax({
-        url: serviceUrl,
-        type: 'PUT',
-        headers: {"X-CSRFToken": csrftoken},
-        success:  function(result) {
-            if(callback != null){
-                callback();
-            }
-        },
-        error: function(result) {
-            console.log('error');
-        }
-    });
-}
-
-function getRequest(serviceUrl, callback = null){
-    $.ajax({
-        url: serviceUrl,
-        headers: {"X-CSRFToken": csrftoken},
-        type: 'GET',
-        success: function(result) {
-            if(callback != null){
-                callback(result);
-            }
-        },
-        error: function(result) {
-            console.log('error');
-            console.log(result);
-        }
-    });
-}
-
-// using jQuery
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-function updateError(checkbox, err){
-    var checkBox = $("input:checkbox[value=" + checkbox.value + "]")
-    checkBox.prop("checked", !checkbox.checked);
-    var error = checkBox.closest('tr').find(".error");
-    error.text(err + ", try again.");
-    console.info(error);
-    //console.info($(this).element.closest('tr').find('.error'));
-}
-
-</script>
-<link rel="stylesheet" type="text/css" href="/static/Manage/css/manage.main.css">
-<style>
-    .error{
-        color: red;
-    }
-</style>
+    </style>
 
 </head>
+
 <body>
     <table>
         <tr>
             <td>
                 <label style="float: left" class="switch">
-                    <input type="checkbox" haDevices="light.linear_pd300z2_plugin_dimmer_module_level_6_0,light.linear_pd300z2_plugin_dimmer_module_level_7_0" haOnLevel="50" onclick="updateLevels(this)" />
+                    <input type="checkbox" haDevices="light.bill_level,light.max_level" haOnLevel="50" onclick="updateLevels(this)" />
                     <div class="slider round"></div>
                 </label>
             </td>
@@ -204,7 +205,7 @@ function updateError(checkbox, err){
         <tr>
             <td>
                 <label style="float: left" class="switch">
-                    <input type="checkbox" haDevices="light.act_zdp100_plugin_lamp_module_level_4_0" haOnLevel="255" onclick="updateLevels(this)" />
+                    <input type="checkbox" haDevices="light.tweety_level" haOnLevel="255" onclick="updateLevels(this)" />
                     <div class="slider round"></div>
                 </label>
             </td>
@@ -220,7 +221,7 @@ function updateError(checkbox, err){
         <tr>
             <td>
                 <label style="float: left" class="switch">
-                    <input type="checkbox" haDevices="switch.ge_12722_onoff_relay_switch_switch_19_0" onclick="updateLevels(this)" />
+                    <input type="checkbox" haDevices="switch.kitchen_switch" onclick="updateLevels(this)" />
                     <div class="slider round"></div>
                 </label>
             </td>
@@ -236,7 +237,23 @@ function updateError(checkbox, err){
         <tr>
             <td>
                 <label style="float: left" class="switch">
-                    <input type="checkbox" haDevices="switch.garage,binary_sensor.__sensor_10_0" onclick="buttonPressed(this)" cycleTime="30" />
+                    <input type="checkbox" haDevices="switch.sonoff" onclick="updateLevels(this)" />
+                    <div class="slider round"></div>
+                </label>
+            </td>
+            <td>
+                <label style="float: left;">
+                    Sonoff
+                </label>
+            </td>
+            <td>
+                <label class="error" style="float: left;" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label style="float: left" class="switch">
+                    <input type="checkbox" haDevices="switch.garage,binary_sensor.garage_sensor" onclick="buttonPressed(this)" cycleTime="30" />
                     <div class="slider round"></div>
                 </label>
             </td>
@@ -251,4 +268,5 @@ function updateError(checkbox, err){
         </tr>
     </table>
 </body>
+
 </html>
