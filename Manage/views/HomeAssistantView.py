@@ -16,16 +16,16 @@ from django.http import HttpResponse
 class HomeAssistantView(APIView):
     """defines views for each of the http verbs"""
 
-    endpoint = "https://www.lofgrenguenther.com:8123"
+    endpoint = os.environ.get("HOMEASSISTANT_ENDPOINT", '')
 
     @staticmethod
     @api_view(['GET'])
     @renderer_classes((JSONRenderer,))
     @permission_classes((permissions.AllowAny,))
-    def status(pk=None):
+    def status(request, device_id=None):
         """returns the status from the homeassistant service"""
 
-        url = HomeAssistantView.endpoint + "/api/states/%s" % pk
+        url = HomeAssistantView.endpoint + "/api/states/%s" % device_id
 
         ha_password = os.environ.get("HOMEASSISTANT_PASSWORD", '')
 
@@ -40,7 +40,7 @@ class HomeAssistantView(APIView):
             'x-ha-access': ha_password,
             'Accept': "application/json"
         }
-        static = "static/www.lofgrenguenther.com.pem"
+        static = "static/cert.pem"
         static = os.path.join(settings.BASE_DIR, static)
         response = requests.request("GET", url, headers=headers, verify=static)
 
@@ -51,7 +51,7 @@ class HomeAssistantView(APIView):
     @api_view(['PUT'])
     @renderer_classes((JSONRenderer,))
     @permission_classes((permissions.AllowAny,))
-    def turn_off(device_code=None):
+    def turn_off(request, device_code=None):
         """turns_off a light or a switch using the appropriate ha service"""
 
         payload = {"entity_id": device_code}
@@ -86,14 +86,14 @@ class HomeAssistantView(APIView):
     @api_view(['PUT'])
     @renderer_classes((JSONRenderer,))
     @permission_classes((permissions.AllowAny,))
-    def turn_on(device_code, on_level=255):
+    def turn_on(request, device_code, on_level=255):
         """turns on a light or switch using the appropriate ha service"""
 
         if "light." in device_code:
             url = HomeAssistantView.endpoint + "/api/services/light/turn_on"
             payload = {"entity_id": device_code, "brightness": on_level}
         else:
-            url = "https://www.lofgrenguenther.com:8123"
+            url = HomeAssistantView.endpoint
             url += "/api/services/switch/turn_on"
             payload = {"entity_id": device_code}
 
