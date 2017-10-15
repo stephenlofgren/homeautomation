@@ -2,4 +2,17 @@ version: 0.0
 os: linux 
 files:
   - source: /
-    destination: /home/ec2-user
+    destination: /var/www/html/homeautomation
+hooks:
+  BeforeInstall:
+    - location: scripts/install.sh
+  AfterInstall:
+    - location: scripts/configure.sh
+      timeout: 180
+  #ApplicationStart:
+  #  - location: Scripts/RunFunctionalTests.sh
+  #    timeout: 3600
+  #ValidateService:
+  #  - location: Scripts/MonitorService.sh
+  #    timeout: 3600
+  #    runas: codedeployuser
